@@ -44,14 +44,14 @@ func main(){
 
 	
 	// Repositories
-	userRepo := repositories.NewUserRepository(database)
-	noteRepo := repositories.NewNoteRepository(database)
-	tokenRepo := repositories.NewTokenRepository(database)
+	userRepo := repositories.NewUserRepository(database, infoLog, errorLog)
+	noteRepo := repositories.NewNoteRepository(database, infoLog, errorLog)
+	tokenRepo := repositories.NewTokenRepository(database, infoLog, errorLog)
 
 
 	// Services
-	authService := services.NewAuthService(userRepo, tokenRepo, cfg)
-	noteService := services.NewNoteService(noteRepo)
+	authService := services.NewAuthService(userRepo, tokenRepo, cfg, infoLog, errorLog)
+	noteService := services.NewNoteService(noteRepo, infoLog, errorLog)
 
 
 	// Application
@@ -80,7 +80,7 @@ func main(){
 		infoLog.Printf("starting server on %s", *addr)
 		err := srv.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
-			errorLog.Fatal(err)
+			srv.errorLog.Fatal(err)
 		}
 	}()
 
