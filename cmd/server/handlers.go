@@ -76,8 +76,10 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	deviceInfo := r.UserAgent()
+
 	// Get the tokens
-	tokens, err := app.authService.Login(r.Context(), req.Email, req.Password)
+	tokens, err := app.authService.Login(r.Context(), req.Email, req.Password, deviceInfo)
 	if err != nil {
 		utils.ErrorJSON(w, http.StatusUnauthorized, err.Error())
 		return
@@ -94,7 +96,9 @@ func (app *application) googleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	tokens, err := app.authService.GoogleLogin(r.Context(), req.Token)
+	deviceInfo := r.UserAgent()
+
+	tokens, err := app.authService.GoogleLogin(r.Context(), req.Token, deviceInfo)
 	if err != nil {
 		utils.ErrorJSON(w, http.StatusUnauthorized, err.Error())
 		return
