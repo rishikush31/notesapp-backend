@@ -6,8 +6,9 @@ import (
 	"log"
 	"time"
 
-	"google.golang.org/api/idtoken"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"google.golang.org/api/idtoken"
+	"github.com/golang-jwt/jwt/v5"
 
 	"notesapp-backend/internal/config"
 	"notesapp-backend/internal/models"
@@ -18,6 +19,8 @@ import (
 var (
 	ErrInvalidCredentials = errors.New("invalid credentials")
 	ErrTokenExpired       = errors.New("refresh token expired")
+	ErrTokenRevoked       = errors.New("refresh token revoked")
+	ErrInvalidToken       = errors.New("Invalid Token")
 )
 
 type AuthService struct {
@@ -151,7 +154,6 @@ func (s *AuthService) GoogleLogin(
 	return s.issueTokens(ctx, user.ID, deviceInfo)
 }
 
-
 // -------------------- REFRESH --------------------
 
 func (s *AuthService) RefreshToken(
@@ -186,8 +188,6 @@ func (s *AuthService) RefreshToken(
 	return s.issueTokens(ctx, storedToken.UserID, storedToken.DeviceInfo)
 }
 
-
-
 // -------------------- LOGOUT --------------------
 
 func (s *AuthService) Logout(
@@ -216,6 +216,7 @@ func (s *AuthService) issueTokens(
 		return "", "", err
 	}
 
+	
 	rawRefresh := utils.GenerateRandomToken()
 	refreshHash := utils.HashToken(rawRefresh)
 
@@ -226,7 +227,7 @@ func (s *AuthService) issueTokens(
 		DeviceInfo: deviceInfo,
 		ExpiresAt:  time.Now().UTC().Add(s.cfg.RefreshTokenTTL),
 		Revoked:    false,
-		CreatedAt: time.Now().UTC(),
+		CreatedAt:  time.Now().UTC(),
 	}
 
 	if err := s.tokenRepo.Create(ctx, rt); err != nil {
@@ -235,3 +236,28 @@ func (s *AuthService) issueTokens(
 
 	return accessToken, rawRefresh, nil
 }
+
+func (s *AuthService) ValidateAccessToken(tokenStr string) (string, error) {
+	token, err := jwt.ParseWithClaims(
+		tokenStr,
+		&jwt.RegisteredClaims{},
+		func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, ErrInvalidToken
+			}
+			return []byte(s.cfg.JWTSecret), nil
+		},
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	claims, ok := token.Claims.(*jwt.RegisteredClaims)
+	if !ok || !token.Valid {
+		return "", ErrInvalidToken
+	}
+
+	return claims.Subject, nil
+}
+

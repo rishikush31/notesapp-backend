@@ -27,15 +27,15 @@ type TokenRepository interface {
 }
 
 // ------------------- STRUCT -------------------
-type TokenRepo struct {
+type tokenRepo struct {
 	collection *mongo.Collection
 	infoLog    *log.Logger
 	errorLog   *log.Logger
 }
 
 // ------------------- CONSTRUCTOR -------------------
-func NewTokenRepo(db *mongo.Database, infoLog, errorLog *log.Logger) *TokenRepo {
-	return &TokenRepo{
+func NewTokenRepository(db *mongo.Database, infoLog, errorLog *log.Logger) TokenRepository {
+	return &tokenRepo{
 		collection: db.Collection("refresh_tokens"),
 		infoLog:    infoLog,
 		errorLog:   errorLog,
@@ -44,7 +44,7 @@ func NewTokenRepo(db *mongo.Database, infoLog, errorLog *log.Logger) *TokenRepo 
 
 // ------------------- CRUD METHODS -------------------
 
-func (r *TokenRepo) Create(ctx context.Context, token *models.RefreshToken) error {
+func (r *tokenRepo) Create(ctx context.Context, token *models.RefreshToken) error {
 	token.ID = primitive.NewObjectID()
 	token.CreatedAt = time.Now().UTC()
 
@@ -56,10 +56,10 @@ func (r *TokenRepo) Create(ctx context.Context, token *models.RefreshToken) erro
 	return nil
 }
 
-func (r *TokenRepo) FindByHash(ctx context.Context, hash string) (*models.RefreshToken, error) {
+func (r *tokenRepo) FindByHash(ctx context.Context, hash string) (*models.RefreshToken, error) {
 	var token models.RefreshToken
 	err := r.collection.FindOne(ctx, bson.M{
-		"tokenHash": hash,
+		"token_hash": hash,
 		"revoked":   false,
 	}).Decode(&token)
 	if err != nil {
@@ -72,7 +72,7 @@ func (r *TokenRepo) FindByHash(ctx context.Context, hash string) (*models.Refres
 	return &token, nil
 }
 
-func (r *TokenRepo) GetByTokenID(ctx context.Context, id primitive.ObjectID) (*models.RefreshToken, error) {
+func (r *tokenRepo) GetByTokenID(ctx context.Context, id primitive.ObjectID) (*models.RefreshToken, error) {
 	var token models.RefreshToken
 	err := r.collection.FindOne(ctx, bson.M{"_id": id}).Decode(&token)
 	if err != nil {
@@ -85,7 +85,7 @@ func (r *TokenRepo) GetByTokenID(ctx context.Context, id primitive.ObjectID) (*m
 	return &token, nil
 }
 
-func (r *TokenRepo) Revoke(ctx context.Context, id primitive.ObjectID) error {
+func (r *tokenRepo) Revoke(ctx context.Context, id primitive.ObjectID) error {
 	_, err := r.collection.UpdateOne(
 		ctx,
 		bson.M{"_id": id},
@@ -98,7 +98,7 @@ func (r *TokenRepo) Revoke(ctx context.Context, id primitive.ObjectID) error {
 	return nil
 }
 
-func (r *TokenRepo) RevokeAllForUser(ctx context.Context, userID primitive.ObjectID) error {
+func (r *tokenRepo) RevokeAllForUser(ctx context.Context, userID primitive.ObjectID) error {
 	_, err := r.collection.UpdateMany(
 		ctx,
 		bson.M{"userId": userID},

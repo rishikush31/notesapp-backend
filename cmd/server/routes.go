@@ -3,6 +3,7 @@ package main
 
 import (
 	"net/http"
+
 	"github.com/gorilla/mux"
 )
 
@@ -11,7 +12,7 @@ func (app *application) routes() http.Handler {
 	r := mux.NewRouter()
 
 	// Middleware for route request logging
-	r.Use(app.logRequest) 
+	r.Use(app.logRequest)
 
 	// Health
 	r.HandleFunc("/health", app.healthCheck).Methods(http.MethodGet)

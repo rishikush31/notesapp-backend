@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
 	"github.com/google/uuid"
 )
 
 // context keys to add in context in downstream request to conume
-type contextKey string 
+type contextKey string
 
 const (
 	contextKeyUserID contextKey = "userID"
@@ -18,7 +19,7 @@ const (
 )
 
 // Request logging middleware
-func (app *application) 	(next http.Handler) http.Handler {
+func (app *application) logRequest(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
 
@@ -46,7 +47,7 @@ func (app *application) 	(next http.Handler) http.Handler {
 	})
 }
 
-// Auth middleware 
+// Auth middleware
 func (app *application) authenticate(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		authHeader := r.Header.Get("Authorization")
