@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"log"
 	"net/http"
 	"os"
@@ -42,9 +41,7 @@ func main() {
 		port = "3000"
 	}
 
-	addr := flag.String("addr", ":" + port , "HTTP network address")
-	flag.Parse()
-
+	addr := ":" + port
 
 	// MongoDB
 	mongoClient, err := db.NewMongoClient(cfg.MongoURI)
@@ -81,7 +78,7 @@ func main() {
 
 	// Create a server
 	srv := &http.Server{
-		Addr:         *addr,
+		Addr:         addr,
 		ErrorLog:     errorLog,
 		Handler:      app.routes(),
 		ReadTimeout:  10 * time.Second,
@@ -91,7 +88,7 @@ func main() {
 
 	// Start the server
 	go func() {
-		infoLog.Printf("starting server on %s", *addr)
+		infoLog.Printf("starting server on %s", addr)
 		err := srv.ListenAndServe()
 		if err != nil && err != http.ErrServerClosed {
 			srv.ErrorLog.Fatal(err)
