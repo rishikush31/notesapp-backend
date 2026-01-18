@@ -27,9 +27,6 @@ type application struct {
 
 func main() {
 
-	addr := flag.String("addr", ":3000", "HTTP network address")
-	flag.Parse()
-
 	// Loggers
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stdout, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
@@ -39,6 +36,15 @@ func main() {
 	if err != nil {
 		errorLog.Fatal(err)
 	}
+
+	port := cfg.Port
+	if port == "" {
+		port = "3000"
+	}
+
+	addr := flag.String("addr", ":" + port , "HTTP network address")
+	flag.Parse()
+
 
 	// MongoDB
 	mongoClient, err := db.NewMongoClient(cfg.MongoURI)
