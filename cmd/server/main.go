@@ -70,6 +70,9 @@ func main() {
 		noteService: noteService,
 	}
 
+	app.infoLog.Printf("Testing App infoLogger")
+	app.errorLog.Printf("Testing App errorLogger")
+
 	// Create a server
 	srv := &http.Server{
 		Addr:         *addr,

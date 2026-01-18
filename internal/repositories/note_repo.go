@@ -37,11 +37,16 @@ func NewNoteRepository(
 	db *mongo.Database,
 	infoLog, errorLog *log.Logger,
 ) NoteRepository {
-	return &noteRepo{
+	noteRepository :=  &noteRepo{
 		collection: db.Collection("notes"),
 		infoLog:    infoLog,
 		errorLog:   errorLog,
 	}
+
+	noteRepository.infoLog.Printf("Testing noteRepository infoLogger")
+	noteRepository.errorLog.Printf("Testing noteRepository errorLogger")
+
+	return noteRepository
 }
 
 func (r *noteRepo) Create(ctx context.Context, note *models.Note) error {

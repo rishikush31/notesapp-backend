@@ -35,11 +35,16 @@ type tokenRepo struct {
 
 // ------------------- CONSTRUCTOR -------------------
 func NewTokenRepository(db *mongo.Database, infoLog, errorLog *log.Logger) TokenRepository {
-	return &tokenRepo{
+	tokenRepository := &tokenRepo{
 		collection: db.Collection("refresh_tokens"),
 		infoLog:    infoLog,
 		errorLog:   errorLog,
 	}
+
+	tokenRepository.infoLog.Printf("Testing tokenRepository infoLogger")
+	tokenRepository.errorLog.Printf("Testing tokenRepository errorLogger")
+
+	return tokenRepository
 }
 
 // ------------------- CRUD METHODS -------------------

@@ -29,11 +29,16 @@ func NewNoteService(
 	infoLog *log.Logger,
 	errorLog *log.Logger,
 ) *NoteService {
-	return &NoteService{
+	noteService := &NoteService{
 		noteRepo: noteRepo,
 		infoLog:  infoLog,
 		errorLog: errorLog,
 	}
+
+	noteService.infoLog.Printf("Testing noteService infoLogger")
+	noteService.errorLog.Printf("Testing noteService errorLogger")
+
+	return noteService
 }
 
 //

@@ -35,11 +35,16 @@ func NewUserRepository(
 	db *mongo.Database,
 	infoLog, errorLog *log.Logger,
 ) UserRepository {
-	return &userRepo{
+	userRepository := &userRepo{
 		collection: db.Collection("users"), // internally picks collection
 		infoLog:    infoLog,
 		errorLog:   errorLog,
 	}
+
+	userRepository.infoLog.Printf("Testing userRepository infoLogger")
+	userRepository.errorLog.Printf("Testing userRepository errorLogger")
+
+	return userRepository
 }
 
 // Create new user

@@ -38,13 +38,18 @@ func NewAuthService(
 	infoLog *log.Logger,
 	errorLog *log.Logger,
 ) *AuthService {
-	return &AuthService{
+	authService := &AuthService{
 		userRepo:  userRepo,
 		tokenRepo: tokenRepo,
 		cfg:       cfg,
 		infoLog:   infoLog,
 		errorLog:  errorLog,
 	}
+	
+	authService.infoLog.Printf("Testing authService infoLogger")
+	authService.errorLog.Printf("Testing authService errorLogger")
+
+	return authService
 }
 
 // -------------------- REGISTER --------------------
@@ -216,7 +221,6 @@ func (s *AuthService) issueTokens(
 		return "", "", err
 	}
 
-	
 	rawRefresh := utils.GenerateRandomToken()
 	refreshHash := utils.HashToken(rawRefresh)
 
