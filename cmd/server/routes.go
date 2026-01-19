@@ -28,6 +28,7 @@ func (app *application) routes() http.Handler {
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(app.authenticate)
 
+	api.HandleFunc("/user",app.getUser).Methods(http.MethodGet)
 	api.HandleFunc("/notes", app.createNote).Methods(http.MethodPost)
 	api.HandleFunc("/notes", app.listNotes).Methods(http.MethodGet)
 	api.HandleFunc("/notes/{id}", app.getNote).Methods(http.MethodGet)

@@ -35,12 +35,6 @@ type loginRequest struct {
 type googleLoginRequest struct {
 	Token string `json:"token"`
 }
-type refreshTokenRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
-type logoutRequest struct {
-	RefreshToken string `json:"refresh_token"`
-}
 
 // Auth : Register
 func (app *application) register(w http.ResponseWriter, r *http.Request) {
@@ -84,16 +78,12 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	utils.SetAuthCookies(w, accessToken, refreshToken)
+
 	utils.WriteJSON(
     w,
     http.StatusOK,
-    struct {
-        AccessToken  string `json:"access_token"`
-        RefreshToken string `json:"refresh_token"`
-    }{
-        AccessToken:  accessToken,
-        RefreshToken: refreshToken,
-    },
+    map[string]string{"status": "ok"},
     nil,
 )
 }
@@ -114,61 +104,50 @@ func (app *application) googleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	utils.SetAuthCookies(w, accessToken, refreshToken)
+
 	utils.WriteJSON(
     w,
     http.StatusOK,
-    struct {
-        AccessToken  string `json:"access_token"`
-        RefreshToken string `json:"refresh_token"`
-    }{
-        AccessToken:  accessToken,
-        RefreshToken: refreshToken,
-    },
+    map[string]string{"status": "ok"},
     nil,
 )
 }
 
 // Auth: Refresh Token
 func (app *application) refreshToken(w http.ResponseWriter, r *http.Request) {
-	var req refreshTokenRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.ErrorJSON(w, http.StatusBadRequest, "invalid request payload")
+	cookie, err := r.Cookie("refresh_token")
+	if err != nil {
+		utils.ErrorJSON(w, http.StatusUnauthorized, "refresh token missing")
 		return
 	}
 
-	accessToken, refreshToken, err := app.authService.RefreshToken(r.Context(), req.RefreshToken)
+	accessToken, refreshToken, err := app.authService.RefreshToken(r.Context(), cookie.Value)
 	if err != nil {
 		utils.ErrorJSON(w, http.StatusUnauthorized, err.Error())
 		return
 	}
 
+	utils.SetAuthCookies(w, accessToken, refreshToken)
+
 	utils.WriteJSON(
     w,
     http.StatusOK,
-    struct {
-        AccessToken  string `json:"access_token"`
-        RefreshToken string `json:"refresh_token"`
-    }{
-        AccessToken:  accessToken,
-        RefreshToken: refreshToken,
-    },
+    map[string]string{"status": "ok"},
     nil,
 )
 }
 
 // Auth : logout
 func (app *application) logout(w http.ResponseWriter, r *http.Request) {
-	var req logoutRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		utils.ErrorJSON(w, http.StatusBadRequest, "invalid request payload")
-		return
+	cookie, err := r.Cookie("refresh_token")
+	if err == nil {
+		// optional: revoke in backend if you keep DB
+		app.authService.Logout(r.Context(), cookie.Value)
 	}
 
-	err := app.authService.Logout(r.Context(), req.RefreshToken)
-	if err != nil {
-		utils.ErrorJSON(w, http.StatusBadRequest, err.Error())
-		return
-	}
+	// Delete both cookies
+	utils.DeleteAuthCookies(w)
 
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "logged out"}, nil)
 }
@@ -262,4 +241,36 @@ func (app *application) deleteNote(w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.WriteJSON(w, http.StatusOK, map[string]string{"message": "note deleted"}, nil)
+}
+
+
+// ------------------ User Handlers --------------------------------------------
+
+// User : Get current user
+func (app *application) getUser(w http.ResponseWriter, r *http.Request) {
+
+	// Extract userID from context (set by authenticate middleware)
+	userID, ok := r.Context().Value(contextKeyUserID).(string)
+	if !ok || userID == "" {
+		utils.ErrorJSON(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	// Fetch user from service
+	user, err := app.authService.GetUser(r.Context(), userID)
+	if err != nil {
+		utils.ErrorJSON(w, http.StatusNotFound, err.Error())
+		return
+	}
+
+	// Respond
+	utils.WriteJSON(
+		w,
+		http.StatusOK,
+		map[string]interface{}{
+			"name":  user.Name,
+			"email": user.Email,
+		},
+		nil,
+	)
 }

@@ -21,6 +21,7 @@ type UserRepository interface {
 	FindByEmail(ctx context.Context, email string) (*models.User, error)
 	FindByGoogleSub(ctx context.Context, googleSub string) (*models.User, error)
 	FindByID(ctx context.Context, id primitive.ObjectID) (*models.User, error)
+	UpdateGoogleSub(ctx context.Context, userID primitive.ObjectID, googleSub string) error
 }
 
 // -------------------- IMPLEMENTATION --------------------
@@ -98,4 +99,22 @@ func (r *userRepo) FindByID(ctx context.Context, id primitive.ObjectID) (*models
 		return nil, err
 	}
 	return &user, nil
+}
+
+// Update user with Google Sub
+func (r *userRepo) UpdateGoogleSub(ctx context.Context, userID primitive.ObjectID, googleSub string) error {
+	result, err := r.collection.UpdateOne(
+		ctx,
+		bson.M{"_id": userID},
+		bson.M{"$set": bson.M{"googleSub": googleSub}},
+	)
+	if err != nil {
+		r.errorLog.Printf("userRepo.UpdateGoogleSub: %v", err)
+		return err
+	}
+	if result.MatchedCount == 0 {
+		return ErrUserNotFound
+	}
+	r.infoLog.Printf("userRepo.UpdateGoogleSub: user %s updated", userID.Hex())
+	return nil
 }

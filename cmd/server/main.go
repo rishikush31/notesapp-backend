@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/gorilla/handlers"
+
 	"notesapp-backend/internal/config"
 	"notesapp-backend/internal/db"
 	"notesapp-backend/internal/repositories"
@@ -76,11 +78,19 @@ func main() {
 	app.infoLog.Printf("Testing App infoLogger")
 	app.errorLog.Printf("Testing App errorLogger")
 
+	allowedOrigins := []string{"http://localhost:3001"}
+	corsHandler := handlers.CORS(
+		handlers.AllowedOrigins(allowedOrigins),                 // allow all origins
+		handlers.AllowCredentials(),
+		handlers.AllowedMethods([]string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}), // all common methods
+		handlers.AllowedHeaders([]string{"Content-Type", "Authorization"}),           // allow common headers
+	)(app.routes())
+
 	// Create a server
 	srv := &http.Server{
 		Addr:         addr,
 		ErrorLog:     errorLog,
-		Handler:      app.routes(),
+		Handler:      corsHandler,
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,

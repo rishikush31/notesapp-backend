@@ -134,24 +134,38 @@ func (s *AuthService) GoogleLogin(
 
 	name, _ := payload.Claims["name"].(string)
 
-	// 3. Find user by Google sub
+	// 3. Try to find user by Google sub first
 	user, err := s.userRepo.FindByGoogleSub(ctx, googleSub)
 	if err != nil {
 		if err != repositories.ErrUserNotFound {
 			return "", "", err
 		}
 
-		// 4. Create user if not exists
-		user = &models.User{
-			ID:        primitive.NewObjectID(),
-			Name:      name,
-			Email:     email,
-			GoogleSub: &googleSub,
-			CreatedAt: time.Now().UTC(),
-		}
+		// 4. If not found by Google sub, try to find by email
+		user, err = s.userRepo.FindByEmail(ctx, email)
+		if err != nil {
+			if err != repositories.ErrUserNotFound {
+				return "", "", err
+			}
 
-		if err := s.userRepo.Create(ctx, user); err != nil {
-			return "", "", err
+			// 5. Create user if not exists
+			user = &models.User{
+				ID:        primitive.NewObjectID(),
+				Name:      name,
+				Email:     email,
+				GoogleSub: &googleSub,
+				CreatedAt: time.Now().UTC(),
+			}
+
+			if err := s.userRepo.Create(ctx, user); err != nil {
+				return "", "", err
+			}
+		} else {
+			// 6. Link Google account to existing user
+			if err := s.userRepo.UpdateGoogleSub(ctx, user.ID, googleSub); err != nil {
+				return "", "", err
+			}
+			user.GoogleSub = &googleSub
 		}
 	}
 
@@ -265,3 +279,23 @@ func (s *AuthService) ValidateAccessToken(tokenStr string) (string, error) {
 	return claims.Subject, nil
 }
 
+
+// -------------------- GET USER --------------------
+
+func (s *AuthService) GetUser(
+	ctx context.Context,
+	userID string,
+) (*models.User, error) {
+
+	objectID, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return nil, ErrInvalidToken
+	}
+
+	user, err := s.userRepo.FindByID(ctx, objectID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
