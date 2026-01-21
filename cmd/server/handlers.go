@@ -91,10 +91,13 @@ func (app *application) login(w http.ResponseWriter, r *http.Request) {
 // Auth : googleLogin
 func (app *application) googleLogin(w http.ResponseWriter, r *http.Request) {
 	var req googleLoginRequest
+	app.infoLog.Println("request body : ", r.Body)
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		utils.ErrorJSON(w, http.StatusBadRequest, "invalid request payload")
 		return
 	}
+
+	app.infoLog.Println("req.Token : ", req.Token)
 
 	deviceInfo := r.UserAgent()
 
@@ -104,8 +107,12 @@ func (app *application) googleLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	app.infoLog.Println("access_token : ", accessToken)
+	app.infoLog.Println("refresh_token : ", refreshToken)
+
 	utils.SetAuthCookies(w, accessToken, refreshToken)
 
+	app.infoLog.Println("http.Status.ok : ",  http.StatusOK)
 	utils.WriteJSON(
     w,
     http.StatusOK,
@@ -249,6 +256,7 @@ func (app *application) deleteNote(w http.ResponseWriter, r *http.Request) {
 // User : Get current user
 func (app *application) getUser(w http.ResponseWriter, r *http.Request) {
 
+	app.infoLog.Println("Getting to getUser Handlere");
 	// Extract userID from context (set by authenticate middleware)
 	userID, ok := r.Context().Value(contextKeyUserID).(string)
 	if !ok || userID == "" {

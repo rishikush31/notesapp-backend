@@ -55,9 +55,16 @@ func (app *application) authenticate(next http.Handler) http.Handler {
 			return
 		}
 
+		app.infoLog.Println("In auth middleware, this is the access_token cookie : ", cookie.Name, cookie.Value)
+
 		tokenStr := cookie.Value
 
+		app.infoLog.Println("In auth middleware, this is the access_token : ", tokenStr)
+
 		userID, err := app.authService.ValidateAccessToken(tokenStr)
+
+		app.infoLog.Println("In auth middleware, User id from the access_token : ", userID)
+		
 		if err != nil {
 			http.Error(w, "invalid or expired token", http.StatusUnauthorized)
 			return
