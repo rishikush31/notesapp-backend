@@ -78,7 +78,7 @@ func main() {
 	app.infoLog.Printf("Testing App infoLogger")
 	app.errorLog.Printf("Testing App errorLogger")
 
-	allowedOrigins := []string{"http://localhost:3001","https://localhost:3001"}
+	allowedOrigins := []string{"http://localhost:3001","https://localhost:3001","https://notesapp-frontend-1-5jfz.onrender.com","http://notesapp-frontend-1-5jfz.onrender.com"}
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins(allowedOrigins),                 // allow all origins
 		handlers.AllowCredentials(),
