@@ -78,7 +78,7 @@ func main() {
 	app.infoLog.Printf("Testing App infoLogger")
 	app.errorLog.Printf("Testing App errorLogger")
 
-	allowedOrigins := []string{"http://localhost:3001"}
+	allowedOrigins := []string{"http://localhost:3001","https://localhost:3001"}
 	corsHandler := handlers.CORS(
 		handlers.AllowedOrigins(allowedOrigins),                 // allow all origins
 		handlers.AllowCredentials(),
